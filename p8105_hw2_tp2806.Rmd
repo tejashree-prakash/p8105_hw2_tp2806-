@@ -1,0 +1,28 @@
+---
+title: "p8105_hw2_tp2806"
+author: "Tejashree Prakash"
+date: 2025-09-29
+output: github_document
+---
+
+```{r setup, include=FALSE}
+#Load libraries and data
+library(tidyverse)
+```
+
+```{r}
+#Download and clean pols data
+pols =
+  read_csv("data/fivethirtyeight_datasets/pols-month.csv") %>%
+  separate(mon, into = c("year", "month", "day"), sep = "-", convert = TRUE) %>%
+  mutate(month = month.name[month]) %>% #Convert numbers to month names 
+  mutate(president = case_when( #Create case to show gop or dem president 
+    prez_gop == 1 ~ "gop",
+    prez_dem == 1 ~ "dem"
+  )) %>%
+  select(-prez_dem, -prez_gop, -day)
+```
+
+
+year, month, and day
+
