@@ -21,6 +21,25 @@ pols =
     prez_dem == 1 ~ "dem"
   )) %>%
   select(-prez_dem, -prez_gop, -day)
+
+#Download and clean snp data 
+snp = 
+  read_csv("data/fivethirtyeight_datasets/snp.csv") %>%
+  separate(date, into = c("year", "month", "day"), sep = "/", convert = TRUE) %>%
+  mutate(month = month.name[month]) %>%
+  select(year, month, close, -day)
+
+#Download and clean unemployment data
+unemployment = 
+  read_csv("data/fivethirtyeight_datasets/unemployment.csv") %>%
+  pivot_longer(
+    cols = Jan:Dec,
+    names_to = "month",
+    values_to = "unemployment_percentage"
+  ) 
+
+still: change abbreviated months to full name, makes sure all columns have same capitalization 
+  
 ```
 
 
