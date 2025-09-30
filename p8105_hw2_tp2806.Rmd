@@ -14,6 +14,7 @@ library(lubridate)
 
 ## Problem 1 
 
+Downloading and cleaning data. 
 ```{r}
 #Download and clean pols data
 pols =
@@ -59,6 +60,8 @@ merge <-
 
 final_merge <- 
   left_join(merge, unemployment, by = join_by(year, month)) 
+
+knitr::kable(head(final_merge,15))
 ```
 
 The 'snp' dataset contains 787 observations and 2 variables - the date and the closing values of the S&P stock index on that date. The 'unemployment' dataset was converted to long form, now containing unemployment percentage according to each year and month. The 'pols' dataset contains 822 observations and 9 variables - the key variables include month, year, and party of the president elect. The resulting dataset, after merging, reflects the base structure for the pols dataset, with the unique columns from 'snp' and 'unemployment' added onto it based on matching month and year. Therefore, any values from 'snp' and 'unemployment' that did not have a corresponding month/year with 'pols' was not included in the final dataset. The years in this final dataset range from `r min(final_merge$year)` to `r max(final_merge$year)`.  
@@ -66,65 +69,76 @@ The 'snp' dataset contains 787 observations and 2 variables - the date and the c
 
 ## Problem 2
 
+Downloading and cleaning data. 
 ```{r}
 #Download and clean Mr. Trash Wheel dataset
 mr_trash <- 
-  read_excel("data/trash_wheel_data.xlsx", 
+  read_excel("data/trash_wheel_data_update.xlsx", 
              sheet = "Mr. Trash Wheel",
-             range = "A2:N655") %>%
+             range = "A2:N710") %>%
   janitor::clean_names() %>%
   filter(!is.na(dumpster)) %>% #remove the rows that don't have dumpster info
   mutate(
     sports_balls = as.integer(round(sports_balls)) #convert sports balls column 
   ) %>%
   mutate(
-    identity = "mr" #tag what original dataframe is
-  ) %>%
-  mutate(year = as.numeric(year))
+    identity = "mr", #tag what original dataframe is
+    year = as.numeric(year)
+  )
+knitr::kable(head(mr_trash,10))
 
 #Download and clean Professor Trash Wheel dataset
 prof_trash <- 
-  read_excel("data/trash_wheel_data.xlsx", 
+  read_excel("data/trash_wheel_data_update.xlsx", 
              sheet = "Professor Trash Wheel",
              range = "A2:M123") %>%
   janitor::clean_names() %>%
   filter(!is.na(dumpster)) %>%
   mutate(
-    identity = "prof" #tag what original dataframe is
-  ) %>%
-  mutate(year = as.numeric(year))
+    identity = "prof", #tag what original dataframe is
+    year = as.numeric(year)
+  )
+knitr::kable(head(prof_trash,10))
 
-#Download and clean Gwynnda Trash Wheel dataset
-gwyn_trash <- 
-    read_excel("data/trash_wheel_data.xlsx", 
-             sheet = "Gwynnda Trash Wheel",
-             range = "A2:L266") %>%
+#Download and clean Gwynns Falls Trash Wheel dataset
+gwynn_trash <- 
+    read_excel("data/trash_wheel_data_update.xlsx", 
+             sheet = "Gwynns Falls Trash Wheel",
+             range = "A2:L352") %>%
   janitor::clean_names() %>%
   filter(!is.na(dumpster)) %>%
   mutate(
-    identity = "gwynnda" #tag what original dataframe is
-  ) %>%
-  mutate(year = as.numeric(year))
+    identity = "gwynn", #tag what original dataframe is
+    year = as.numeric(year)
+  )
+knitr::kable(head(gwynn_trash,10))
 ```
 
 
-Merge the trash datasets. 
+Merging the trash datasets. 
 ```{r}
 #Combine gwyn and prof trash first as they share the same columns. 
-trash_wheels <- bind_rows(mr_trash, prof_trash, gwyn_trash)
+trash_wheels <- bind_rows(mr_trash, prof_trash, gwynn_trash)
 
 #Calculate total weight of trash by prof trash
 totalweightprof <- prof_trash %>%
   summarise(total_weight = sum(weight_tons, na.rm = TRUE))
 
 #Calculate total cigarette butts by Gwynnda in June 2022
-totalcig_gwyn <- gwyn_trash %>%
+totalcig_gwyn <- gwynn_trash %>%
   filter(year == 2022, month == "June") %>%
   summarise(total_cigs = sum(cigarette_butts, na.rm = TRUE))
+
+knitr::kable(head(trash_wheels,15))
 ```
 
-After cleaning the data sets, I noticed that not all of the datasets had the same columns. For example, "Mr. Trash Wheel" contains the column "sports balls", whereas the other two datasets do not contain that variable. Therefore, I binded by rows, stacking all datasets on top of the last. The resulting dataset has `r nrow(trash_wheels)` observations. KEY VARIABLES INCLUDE. The total weight of trash collected by Professor Trash Wheel is `r totalweightprof$total_weight`. The total cigarette butts collected by Gwynnda in June 2022 is `r totalcig_gwyn$total_cigs`.
+After cleaning the data sets, I noticed that not all of the datasets had the same columns. For example, "Mr. Trash Wheel" contains the column "sports balls", whereas the other two datasets do not contain that variable. The merged dataset has `r nrow(trash_wheels)` observations. Key variables include: weight of trash collected, cigarette butts collected, plastic bottles, and the original dataset identifier. The total weight of trash collected by Professor Trash Wheel is `r totalweightprof$total_weight`. The total cigarette butts collected by Gwynnda in June 2022 is `r totalcig_gwyn$total_cigs`.
 
 
+## Problem 3
+
+```{r}
+
+```
 
 
