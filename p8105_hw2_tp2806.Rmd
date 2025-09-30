@@ -8,7 +8,10 @@ output: github_document
 ```{r setup, include=FALSE}
 #Load libraries and data
 library(tidyverse)
+library(lubridate)
 ```
+
+## Problem 1 
 
 ```{r}
 #Download and clean pols data
@@ -25,7 +28,10 @@ pols =
 #Download and clean snp data 
 snp = 
   read_csv("data/fivethirtyeight_datasets/snp.csv") %>%
-  separate(date, into = c("year", "month", "day"), sep = "/", convert = TRUE) %>%
+  mutate(
+    date = mdy(date) #turn into as.date format 
+  ) %>%
+  separate(date, into = c("year", "month", "day"), sep = "-", convert = TRUE) %>%
   mutate(month = month.name[month]) %>%
   select(year, month, close, -day)
 
@@ -36,12 +42,25 @@ unemployment =
     cols = Jan:Dec,
     names_to = "month",
     values_to = "unemployment_percentage"
-  ) 
-
-still: change abbreviated months to full name, makes sure all columns have same capitalization 
-  
+  ) %>% 
+  mutate(
+    month = month.name[match(month, month.abb)] #change abbreviated month names to full month names
+  ) %>%
+  rename(year = Year) #make the capitalization of columns consistent 
 ```
 
+Merging all the datasets together. 
 
-year, month, and day
+```{r}
+#Merge datasets - starting with snp into pols 
+merge <- 
+  left_join(pols, snp, by = join_by(year, month)) #want to join by both year and month
 
+final_merge <- 
+  left_join(merge, unemployment, by = join_by(year, month)) 
+```
+
+The 'snp' dataset contains 787 observations and 2 variables - the date and the closing values of the S&P stock index on that date. The 'unemployment' dataset was converted to long form, now containing unemployment percentage according to each year and month. The 'pols' dataset contains 822 observations and 9 variables - the key variables include month, year, and party of the president elect. The resulting dataset, after merging, reflects the base structure for the pols dataset, with the unique columns from 'snp' and 'unemployment' added onto it based on matching month and year. Therefore, any values from 'snp' and 'unemployment' that did not have a corresponding month/year with 'pols' was not included in the final dataset. 
+
+
+## Problem 2
