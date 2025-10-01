@@ -197,6 +197,10 @@ We see that there are `r observations` observations in this dataset, containing 
 
 Rent price fluctuations. 
 ```{r}
+zori_df <- zori_df %>%
+  mutate(date = ymd(date))
 
+jan_df <- zori_df %>%
+  filter(month(date)) == 1 & year(date) %in% c(2020, 2021)
 ```
 
