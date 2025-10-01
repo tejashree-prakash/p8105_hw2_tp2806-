@@ -137,8 +137,66 @@ After cleaning the data sets, I noticed that not all of the datasets had the sam
 
 ## Problem 3
 
+Look at the Zillow Observed Rent Index (ZORI) in New York City between January 2015 and August 2024.
+
+Download and clean data. 
+```{r}
+#Zip metadata
+zip_df <- 
+  read_csv("data/zillow_data/Zip Codes.csv") %>%
+  janitor::clean_names() %>%
+  mutate(file_date = as.Date(file_date, format = "%m/%d/%y")) #consistent date format
+knitr::kable(head(zip_df,10))
+
+#Zillow data
+zori_df <- 
+  read_csv("data/zillow_data/zori.csv") %>%
+  janitor::clean_names() %>%
+  rename(zip_code = region_name, county = county_name) %>%
+  pivot_longer(
+    cols = starts_with("x20"),
+    names_to = "date",
+    values_to = "rent_price"
+  ) %>%
+  mutate(
+    county = str_remove(county, " County$"),
+    date = str_remove(date, "^x"), #remove "x"
+    date = ymd(date) #consistent date format
+  )
+knitr::kable(head(zori_df,10))  
+
+```
+Merge datasets. 
+```{r}
+zillow_df <- left_join(zori_df, zip_df, by= c("zip_code"), relationship =
+  "many-to-many")
+
+zillow_df <- zillow_df %>%
+  select(date, zip_code, neighborhood, county.x, city, state, rent_price) %>%
+  rename(county = county.x)
+
+knitr::kable(head(zillow_df,15))
+```
+
+In this merged dataset, we now can see the Zillow rent pricing data with accurate zip code and neighborhood information in New York. 
+
+## Problem 3 Summaries
+
+```{r}
+observations <- nrow(zillow_df)
+distinct_zips = n_distinct(zillow_df$zip_code)
+distinct_neighborhoods = n_distinct(zillow_df$neighborhood)
+
+#what zip codes missing in Zori that are in Zip metadata
+zips_missing_Zori <- zip_df %>%
+  anti_join(zori_df, by = "zip_code") %>%
+  nrow()
+```
+
+We see that there are `r observations` observations in this dataset, containing `r distinct_zips` distinct zip codes and `r distinct_neighborhoods` distinct neighborhoods. There are `r zips_missing_Zori` zip codes that are in the zip code metadata, but do not have a match with the Zillow rental price data. This suggests that there are not Zillow rentals in those zip codes or that those zip codes are beyond the area range of listings provided in this specific Zillow dataset. 
+
+Rent price fluctuations. 
 ```{r}
 
 ```
-
 
