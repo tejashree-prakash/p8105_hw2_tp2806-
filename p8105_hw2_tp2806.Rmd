@@ -14,6 +14,7 @@ library(lubridate)
 
 ## Problem 1 
 
+
 Downloading and cleaning data. 
 ```{r}
 #Download and clean pols data
@@ -26,6 +27,8 @@ pols =
     prez_dem == 1 ~ "dem"
   )) %>%
   select(-prez_dem, -prez_gop, -day)
+knitr::kable(head(pols, 5))
+
 
 #Download and clean snp data 
 snp = 
@@ -36,6 +39,8 @@ snp =
   separate(date, into = c("year", "month", "day"), sep = "-", convert = TRUE) %>%
   mutate(month = month.name[month]) %>%
   select(year, month, close, -day)
+knitr::kable(head(snp, 5))
+
 
 #Download and clean unemployment data
 unemployment = 
@@ -49,7 +54,10 @@ unemployment =
     month = month.name[match(month, month.abb)] #change abbreviated month names to full month names
   ) %>%
   rename(year = Year) #make the capitalization of columns consistent 
+knitr::kable(head(unemployment, 5))
+
 ```
+
 
 Merging all the datasets together. 
 
@@ -59,17 +67,21 @@ merge <-
   left_join(pols, snp, by = join_by(year, month)) #want to join by both year and month
 
 final_merge <- 
-  left_join(merge, unemployment, by = join_by(year, month)) 
+  left_join(merge, unemployment, by = join_by(year, month)) %>%
+  select(year, month, president, close, unemployment_percentage, everything())
 
-knitr::kable(head(final_merge,15))
+knitr::kable(head(final_merge, 10))
 ```
 
-The 'snp' dataset contains 787 observations and 2 variables - the date and the closing values of the S&P stock index on that date. The 'unemployment' dataset was converted to long form, now containing unemployment percentage according to each year and month. The 'pols' dataset contains 822 observations and 9 variables - the key variables include month, year, and party of the president elect. The resulting dataset, after merging, reflects the base structure for the pols dataset, with the unique columns from 'snp' and 'unemployment' added onto it based on matching month and year. Therefore, any values from 'snp' and 'unemployment' that did not have a corresponding month/year with 'pols' was not included in the final dataset. The years in this final dataset range from `r min(final_merge$year)` to `r max(final_merge$year)`.  
+The 'snp' dataset contains 787 observations and 2 variables - the date and the closing values of the S&P stock index on that date. The 'unemployment' dataset was converted to long form, now containing unemployment percentage according to each year and month. The 'pols' dataset contains 822 observations and 9 variables - the key variables include month, year, and party of the president elect. The resulting dataset, after merging, reflects the base structure for the pols dataset, with the unique columns from 'snp' and 'unemployment' added onto it based on matching month and year. Therefore, any values from 'snp' and 'unemployment' that did not have a corresponding month/year with 'pols' shows as NA in the final dataset. The years in this final dataset range from `r min(final_merge$year)` to `r max(final_merge$year)`.  
+
 
 
 ## Problem 2
 
+
 Downloading and cleaning data. 
+
 ```{r}
 #Download and clean Mr. Trash Wheel dataset
 mr_trash <- 
@@ -85,7 +97,7 @@ mr_trash <-
     identity = "mr", #tag what original dataframe is
     year = as.numeric(year)
   )
-knitr::kable(head(mr_trash,10))
+knitr::kable(head(mr_trash, 5))
 
 #Download and clean Professor Trash Wheel dataset
 prof_trash <- 
@@ -98,7 +110,7 @@ prof_trash <-
     identity = "prof", #tag what original dataframe is
     year = as.numeric(year)
   )
-knitr::kable(head(prof_trash,10))
+knitr::kable(head(prof_trash, 5))
 
 #Download and clean Gwynns Falls Trash Wheel dataset
 gwynn_trash <- 
@@ -111,11 +123,12 @@ gwynn_trash <-
     identity = "gwynn", #tag what original dataframe is
     year = as.numeric(year)
   )
-knitr::kable(head(gwynn_trash,10))
+knitr::kable(head(gwynn_trash, 5))
 ```
 
 
 Merging the trash datasets. 
+
 ```{r}
 #Combine gwyn and prof trash first as they share the same columns. 
 trash_wheels <- bind_rows(mr_trash, prof_trash, gwynn_trash)
@@ -129,24 +142,27 @@ totalcig_gwyn <- gwynn_trash %>%
   filter(year == 2022, month == "June") %>%
   summarise(total_cigs = sum(cigarette_butts, na.rm = TRUE))
 
-knitr::kable(head(trash_wheels,15))
+knitr::kable(head(trash_wheels, 10))
 ```
 
 After cleaning the data sets, I noticed that not all of the datasets had the same columns. For example, "Mr. Trash Wheel" contains the column "sports balls", whereas the other two datasets do not contain that variable. The merged dataset has `r nrow(trash_wheels)` observations. Key variables include: weight of trash collected, cigarette butts collected, plastic bottles, and the original dataset identifier. The total weight of trash collected by Professor Trash Wheel is `r totalweightprof$total_weight`. The total cigarette butts collected by Gwynnda in June 2022 is `r totalcig_gwyn$total_cigs`.
+
 
 
 ## Problem 3
 
 Look at the Zillow Observed Rent Index (ZORI) in New York City between January 2015 and August 2024.
 
-Download and clean data. 
+
+Downloading and cleaning data. 
+
 ```{r}
 #Zip metadata
 zip_df <- 
   read_csv("data/zillow_data/Zip Codes.csv") %>%
   janitor::clean_names() %>%
   mutate(file_date = as.Date(file_date, format = "%m/%d/%y")) #consistent date format
-knitr::kable(head(zip_df,10))
+knitr::kable(head(zip_df, 5))
 
 #Zillow data
 zori_df <- 
@@ -163,10 +179,13 @@ zori_df <-
     date = str_remove(date, "^x"), #remove "x"
     date = ymd(date) #consistent date format
   )
-knitr::kable(head(zori_df,10))  
+knitr::kable(head(zori_df, 5))  
 
 ```
-Merge datasets. 
+
+
+Merging datasets. 
+
 ```{r}
 zillow_df <- left_join(zori_df, zip_df, by= c("zip_code"), relationship =
   "many-to-many")
@@ -175,10 +194,11 @@ zillow_df <- zillow_df %>%
   select(date, zip_code, neighborhood, county.x, city, state, rent_price) %>%
   rename(county = county.x)
 
-knitr::kable(head(zillow_df,15))
+knitr::kable(head(zillow_df, 10))
 ```
 
 In this merged dataset, we now can see the Zillow rent pricing data with accurate zip code and neighborhood information in New York. 
+
 
 ## Problem 3 Summaries
 
@@ -195,12 +215,26 @@ zips_missing_Zori <- zip_df %>%
 
 We see that there are `r observations` observations in this dataset, containing `r distinct_zips` distinct zip codes and `r distinct_neighborhoods` distinct neighborhoods. There are `r zips_missing_Zori` zip codes that are in the zip code metadata, but do not have a match with the Zillow rental price data. This suggests that there are not Zillow rentals in those zip codes or that those zip codes are beyond the area range of listings provided in this specific Zillow dataset. 
 
-Rent price fluctuations. 
-```{r}
-zori_df <- zori_df %>%
-  mutate(date = ymd(date))
 
-jan_df <- zori_df %>%
-  filter(month(date)) == 1 & year(date) %in% c(2020, 2021)
+Calculating rent price fluctuations. 
+```{r}
+jan_drop <- 
+  zillow_df %>%
+  filter(date %in% c("2020-01-31", "2021-01-31")) %>%
+  group_by(zip_code, neighborhood, county) %>%
+  reframe(
+    jan2020_price = rent_price[date == "2020-01-31"],
+    jan2021_price = rent_price[date == "2021-01-31"],
+    .groups = "drop"
+  ) %>%
+  mutate(price_difference = jan2021_price - jan2020_price) %>%
+  filter(!is.na(price_difference)) %>% #don't include any NA in price difference 
+  arrange(price_difference) %>%
+  slice(1:10) %>%
+  select(-.groups) %>% #force it to drop 
+  rename(borough = county)
+
+knitr::kable(head(jan_drop, 10))
 ```
 
+The largest price drops were mostly seen in Lower Manhattan, including Chelsea, Greenwich Village, and LES. We know that these areas tend to be more expensive compared to other areas in NYC, and we also know that there were large price drops that occurred during the COVID pandemic. Therefore, this data we are seeing makes sense.
